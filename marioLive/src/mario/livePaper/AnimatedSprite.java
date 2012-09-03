@@ -5,30 +5,30 @@ import android.graphics.Rect;
 import android.graphics.Bitmap;
 
 public class AnimatedSprite {
-	private Bitmap mAnimation;
-	private int mxPos;
-	private int myPos;
-	private Rect mSRectangle;
-	private int mNoOfFrames;
-	private int mCurrentFrame;
-	private int mSpriteHeight;
-	private int mSpriteWidth;
-	private boolean mPlay;
-	private boolean mRepeat;
-	private long mPrevTime;
-	private int mTimePerFrame; // 1000/fps
-	private int bkgShift;
-	private int fgShift;
-	private boolean mSolid;
-	private int mJumpingSpeed = -8;
-	private float mGravity = 1.9f;
-	private int myInit;
-	private int myVel = 0;
-	private int mxVel = 0;
-	private int mID = 0;
+	protected Bitmap mAnimation;
+	protected int mxPos;
+	protected int myPos;
+	protected Rect mSRectangle;
+	protected int mNoOfFrames;
+	protected int mCurrentFrame;
+	protected int mSpriteHeight;
+	protected int mSpriteWidth;
+	protected boolean mPlay;
+	protected boolean mRepeat;
+	protected long mPrevTime;
+	protected float mTimePerFrame; // 1000/fps
+	protected int bkgShift;
+	protected int fgShift;
+	protected boolean mSolid;
+	protected int mJumpingSpeed = -8;
+	protected float mGravity = 1.9f;
+	protected int myInit;
+	protected int myVel = 0;
+	protected int mxVel = 0;
+	protected int mID = 0;
 	
 	enum objects {
-		Coin(0), Goomba(1), Wall(2), Mario(3), Bkg(4), CoinBlock(5);
+		Coin(0), Goomba(1), Wall(2), Mario(3), Bkg(4), CoinBlock(5), Plant(6), Pipe(7);
 		
 		private int code;
 		
@@ -40,7 +40,7 @@ public class AnimatedSprite {
 			return code;
 		}
 	}
-	private objects objType;
+	protected objects objType;
 	
 	public int getID() {
 		return mID;
@@ -91,6 +91,10 @@ public class AnimatedSprite {
 		myPos = newY;
 	}
 	
+	public void setYVel(int newY) {
+		myVel = newY;
+	}
+	
 	public void pause() {
 		mPlay = false;
 	}
@@ -110,23 +114,28 @@ public class AnimatedSprite {
 		mSolid = false;
 	}
 	
-	public void Initialize(Bitmap theBitmap, int height, int width, int theFrameCount, boolean repeat, int fps, objects objType) {
+	public void Initialize(Bitmap theBitmap, int height, int width, int theFrameCount, boolean repeat, float fps, objects objType) {
 		mAnimation = theBitmap;
 		mSpriteHeight = height;
 		mSpriteWidth = width;
+		//!!!Hackity McHackerson!!!//
 		if(objType == objects.Bkg)
 		{
 			mSpriteWidth += 500;
 		}
+		//!!Hackity McHackerson!!//
 		mSRectangle.top = 0;
 		mSRectangle.bottom = mSpriteHeight;
 		mSRectangle.left = 0;
 		mSRectangle.right = mSpriteWidth;
 		mNoOfFrames = theFrameCount;
 		mRepeat = repeat;
-		mTimePerFrame = 1000/fps;
+		mTimePerFrame = 1000.0f/fps;
 		mPrevTime = 0;
 		this.objType = objType;
+		if(objType.getCode() == objects.Plant.getCode()) {
+			mGravity = 0;
+		}
 	}
 	
 	public void Update(long time) {
@@ -137,21 +146,21 @@ public class AnimatedSprite {
 		if(myPos < myInit) {
 			myVel += mGravity;// * (time - mPrevTime)/1000.0f;
 		}
-		else if(myPos != myInit) {
+		else if(myPos != myInit && objType.getCode() != objects.Plant.getCode()) {
 			myVel = 0;
 			myPos = myInit;
 		}
 		
-		myPos += myVel;//l * (time - mPrevTime)/1000.0f;
+		myPos += myVel;// * (time - mPrevTime)/1000.0f;
 		
 		
-		if(mPlay && !(!mRepeat && mCurrentFrame == mNoOfFrames - 1) && (mTimePerFrame > 0 && time - mPrevTime > mTimePerFrame)) {
+		if(mPlay && !(!mRepeat && (mCurrentFrame == mNoOfFrames - 1)) && (mTimePerFrame > 0.0f && (time - mPrevTime > mTimePerFrame))) {
 			mPrevTime = time;
 			mCurrentFrame += 1;
-			if(mCurrentFrame >= mNoOfFrames && mRepeat) {
+			if((mCurrentFrame >= mNoOfFrames) && mRepeat) {
 				mCurrentFrame = 0;
 			}
-			else {
+			else if(!mRepeat) {
 				mCurrentFrame = mNoOfFrames - 1;
 			}
 		}

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
+import android.util.Log;
 
 public class Mario {
 	private int mXPos;
@@ -38,27 +39,22 @@ public class Mario {
 	private Bitmap[] mStateImg;
 	private AnimatedSprite[] mAnimations;
 	
-	public int collideSide(Rect otherRect) { // top = 1, bottom = -1, else = 0
-		Rect myRect = mAnimations[mState.getCode()].getRect();
-		if(myRect.top+5 >= otherRect.bottom && ((myRect.left < otherRect.left && myRect.right > otherRect.left) || (myRect.left < otherRect.right && myRect.right > otherRect.right)))
-		{
-			return 1;
-		}
-		
-		if(myRect.bottom-5 <= otherRect.top && ((myRect.left < otherRect.left && myRect.right > otherRect.left) || (myRect.left < otherRect.right && myRect.right > otherRect.right)))
-		{
-			return -1;
-		}
-		return 0;
-	}
-	
 	public int collideSide(Rect myRect, Rect otherRect) { // top = 1, bottom = -1, else = 0
-		if(myRect.top+5 >= otherRect.bottom && ((myRect.left < otherRect.left && myRect.right > otherRect.left) || (myRect.left < otherRect.right && myRect.right > otherRect.right)))
+		Rect newRect = new Rect();
+		newRect = myRect;
+		
+		newRect.intersect(otherRect);
+		if(newRect.height() > newRect.width())
+		{
+			return 0;
+		}
+		
+		if(myRect.top >= otherRect.bottom && ((myRect.left < otherRect.left && myRect.right > otherRect.left) || (myRect.left < otherRect.right && myRect.right > otherRect.right)))
 		{
 			return 1;
 		}
 		
-		if(myRect.bottom-5 <= otherRect.top && ((myRect.left < otherRect.left && myRect.right > otherRect.left) || (myRect.left < otherRect.right && myRect.right > otherRect.right)))
+		if(myRect.bottom <= otherRect.top && ((myRect.left < otherRect.left && myRect.right > otherRect.left) || (myRect.left < otherRect.right && myRect.right > otherRect.right)))
 		{
 			return -1;
 		}
@@ -127,26 +123,38 @@ public class Mario {
 		newRect.top = (int)(oldRect.top + mYVel + 10);
 		newRect.bottom = (int)(oldRect.bottom + mYVel - 7);
 		
-		for(int i=0;(i<numObj);i++) {
+		for(int i=0;(i<numObj);i++)
+		{
 			if(Rect.intersects(newRect, collideableObjects[i].getRect())) {
 				int side = collideSide(newRect, collideableObjects[i].getRect());
-    			
 				if(collideableObjects[i].isSolid()) {
 					switch(side) {
 					case 0:
-						mXVel = 0;
+						//mXVel = 0;
 						updateX = false;
 						break;
 						
-					case 1: case -1:
+					case 1: 
 						mYVel = 0;
 						updateY = false;
-						/*if(mXVel > 0) {
+						/*
+						if(mXVel > 0) {
 							this.setState(states.RunRight);
 						}
 						else if(mXVel < 0) {
 							this.setState(states.RunLeft);
 						}*/
+						break;
+					
+					case -1:
+						mYVel = 0;
+						updateY = false;
+						if(mXVel > 0) {
+							this.setState(states.RunRight);
+						}
+						else if(mXVel < 0) {
+							this.setState(states.RunLeft);
+						}
 						break;
 					}
 				}
@@ -166,11 +174,11 @@ public class Mario {
 		if(updateY) { setYPos((int) (mYPos + mYVel)); }
 		
 		if(mXPos - xOffset >= 432) {
-			mXPos = 431;
+			setXPos(431);
 			setState(states.StandRight);
 		}
 		else if(mXPos - xOffset <= 0) {
-			mXPos = 1;
+			setXPos(1);
 			setState(states.StandLeft);
 		}
 	}

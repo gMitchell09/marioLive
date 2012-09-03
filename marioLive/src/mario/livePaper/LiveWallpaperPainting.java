@@ -71,6 +71,7 @@ public class LiveWallpaperPainting extends Thread {
     private AnimatedSprite sprPipe;
     private AnimatedSprite sprBlock;
     private AnimatedSprite pipePlant;
+    private int pipePlantInitY;
     private SensorActivity mSensor;
     private double mTheta;
     private float a,b,c;
@@ -98,11 +99,11 @@ public class LiveWallpaperPainting extends Thread {
         sprCoin.setID(1);
         sprBlock.setID(2);
         
-        sprPipe.Initialize(BitmapFactory.decodeResource(context.getResources(), R.drawable.pipe), 72, 48, 1, false, -1, AnimatedSprite.objects.Wall);
-        sprCoin.Initialize(BitmapFactory.decodeResource(context.getResources(), R.drawable.coin), 24, 20, 6, true, 5, AnimatedSprite.objects.Coin);
-        sprBlock.Initialize(BitmapFactory.decodeResource(context.getResources(), R.drawable.animblock), 24, 24, 4, true, 5, AnimatedSprite.objects.CoinBlock);
-        pipePlant.Initialize(BitmapFactory.decodeResource(context.getResources(), R.drawable.pipeplant), 24, 20, 4, true, 5, AnimatedSprite.objects.Wall);
-        bkg.Initialize(BitmapFactory.decodeResource(context.getResources(), R.drawable.wallpaper_bkg), 1515, 642, 1, false, -1, AnimatedSprite.objects.Bkg);
+        sprPipe.Initialize(BitmapFactory.decodeResource(context.getResources(), R.drawable.pipe), 72, 48, 1, false, -1.0f, AnimatedSprite.objects.Pipe);
+        sprCoin.Initialize(BitmapFactory.decodeResource(context.getResources(), R.drawable.coin), 24, 20, 4, true, 10.0f, AnimatedSprite.objects.Coin);
+        sprBlock.Initialize(BitmapFactory.decodeResource(context.getResources(), R.drawable.animblock), 24, 24, 4, true, 10.0f, AnimatedSprite.objects.CoinBlock);
+        pipePlant.Initialize(BitmapFactory.decodeResource(context.getResources(), R.drawable.pipeplant), 48, 40, 4, true, 10.0f, AnimatedSprite.objects.Plant);
+        bkg.Initialize(BitmapFactory.decodeResource(context.getResources(), R.drawable.wallpaper_bkg), 1515, 642, 1, false, -1.0f, AnimatedSprite.objects.Bkg);
         
         sprPipe.setSolid(true);
         sprBlock.setSolid(true);
@@ -110,6 +111,7 @@ public class LiveWallpaperPainting extends Thread {
         //mario.addCollisionObj(sprPipe);
         mario.addCollisionObj(sprCoin);
         mario.addCollisionObj(sprBlock);
+        mario.addCollisionObj(sprPipe);
         
         mSensor = new SensorActivity(context);
     }
@@ -159,6 +161,13 @@ public class LiveWallpaperPainting extends Thread {
                         mario.update(currentTime);
                         sprCoin.Update(currentTime);
                         sprBlock.Update(currentTime);
+                        pipePlant.Update(currentTime);
+                        if(pipePlant.getYPos() <= this.pipePlantInitY) {
+                        	pipePlant.setYVel(1);
+                        }
+                        if(pipePlant.getYPos() >= this.pipePlantInitY + 70) {
+                        	pipePlant.setYVel(-1);
+                        }
                         doDraw(c);
             		}
                 }
@@ -193,8 +202,9 @@ public class LiveWallpaperPainting extends Thread {
         sprBlock.setXPos(600);
         sprPipe.setXPos(324);
         sprPipe.setYPos(548);
-        pipePlant.setXPos(324);
-        pipePlant.setYPos(548);
+        pipePlant.setXPos(328);
+        pipePlant.setYPos(504);
+        pipePlantInitY = pipePlant.getYPos();
         
         synchronized(this) {
             this.notify();
@@ -241,9 +251,9 @@ public class LiveWallpaperPainting extends Thread {
     	canvas.drawColor(Color.BLACK);
     	bkg.draw(canvas);
     	sprCoin.draw(canvas);
+    	pipePlant.draw(canvas);
     	sprPipe.draw(canvas);
     	sprBlock.draw(canvas);
-    	pipePlant.draw(canvas);
     	mario.draw(canvas);
     }
  
@@ -257,68 +267,26 @@ public class LiveWallpaperPainting extends Thread {
         // this.wait = true;
     	//this.wait = !mario.wasUpdated();
     	//if(mSensor.isUpdated()) {
-    		float[] sensorData = mSensor.getAccel();
-    		mTheta = Math.toDegrees(Math.atan2(sensorData[1], sensorData[0]));
-    		
-    		if(mTheta < 89) {
-    			if(mario.getState() != Mario.states.JumpLeft && mario.getState() != Mario.states.JumpRight) {
-    				mario.setState(Mario.states.RunLeft);
-    			}
-    		}
-    		else if(mTheta > 91) {
-    			if(mario.getState() != Mario.states.JumpLeft && mario.getState() != Mario.states.JumpRight) {
-    				mario.setState(Mario.states.RunRight);
-    			}
-    		}
-    		else {
-    			if(mario.getState() == Mario.states.RunLeft) {
-    				mario.setState(Mario.states.StandLeft);
-    			}
-    			else if(mario.getState() == Mario.states.RunRight) {
-    				mario.setState(Mario.states.StandRight);
-    			}
-    		}
-    		
-    		/*
-    		
-    		final Uri SMS_INBOX = Uri.parse("content://sms/inbox");
-
-    		Cursor c = context.getContentResolver().query(SMS_INBOX, null, "read = 0", null, null);
-    		int unreadMessagesCount = c.getCount();
-    		c.deactivate();
-    		
-    		if(unreadMessagesCount > 0) {
-	    		CharSequence text = "You has Messages!! -- " + unreadMessagesCount;
-				int duration = Toast.LENGTH_SHORT;
-	
-				Toast toast = Toast.makeText(context, text, duration);
-				toast.show();
-    		}
-    		 */
-    		/*
-    		String SMS_READ_COLUMN = "read"; 
-    		String UNREAD_CONDITION = SMS_READ_COLUMN + "=0"; 
-    		int count = 0; 
-    		Cursor cursor = context.getContentResolver().query( 
-    				Uri.parse("content://sms/inbox"), 
-    				new String[] { SMS_ID }, 
-    				UNREAD_CONDITION, null, null); 
-    		if (cursor != null) { 
-    			try { 
-    				count = cursor.getCount(); 
-    			} finally { 
-    				cursor.close(); 
-    			} 
-    		}
-    		if(count > 1) {
-    			CharSequence text = "You has Messages!! -- " + count;
-    			int duration = Toast.LENGTH_SHORT;
-
-    			Toast toast = Toast.makeText(context, text, duration);
-    			toast.show();
-    		}
-    	//}
-    	 */
+		float[] sensorData = mSensor.getAccel();
+		mTheta = Math.toDegrees(Math.atan2(sensorData[1], sensorData[0]));
+		
+		if(mTheta < 89) {
+			if(mario.getState() != Mario.states.JumpLeft && mario.getState() != Mario.states.JumpRight) {
+				mario.setState(Mario.states.RunLeft);
+			}
+		}
+		else if(mTheta > 91) {
+			if(mario.getState() != Mario.states.JumpLeft && mario.getState() != Mario.states.JumpRight) {
+				mario.setState(Mario.states.RunRight);
+			}
+		}
+		else {
+			if(mario.getState() == Mario.states.RunLeft) {
+				mario.setState(Mario.states.StandLeft);
+			}
+			else if(mario.getState() == Mario.states.RunRight) {
+				mario.setState(Mario.states.StandRight);
+			}
+		}
     }
- 
 }
